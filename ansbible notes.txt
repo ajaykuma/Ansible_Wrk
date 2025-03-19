@@ -1,0 +1,81 @@
+Setup Ansible
+--------------
+
+--Setup multiple Linux machines (ubuntu/centos)
+  For ubuntu:
+  - apt update (to update each machine)
+  - setup NAT/Host only adaptor for communication across machines using different IP addresses
+
+Ansible is not installed by default on Ubuntu, but you can easily install it using APT (default package manager) or PPA (Personal Package Archive).
+
+Install Ansible from Ubuntu Repositories (Recommended for Stability)
+- Ubuntu 22.04 provides Ansible in its official repositories.
+
+- update package lists:
+  sudo apt update
+
+- Install ansible
+  sudo apt install -y ansible
+
+- Verify installation
+  ansible --version
+
+root@m1:~# ansible --version
+ansible 2.9.6
+  config file = /etc/ansible/ansible.cfg
+  configured module search path = ['/root/.ansible/plugins/modules', '/usr/share/ansible/plugins/modules']
+  ansible python module location = /usr/lib/python3/dist-packages/ansible
+  executable location = /usr/bin/ansible
+  python version = 3.8.10 (default, Nov 14 2022, 12:59:47) [GCC 9.4.0]
+
+Install the Latest Ansible Version from PPA (For Latest Features)
+- Add the Ansible PPA
+
+sudo apt update
+sudo apt install -y software-properties-common
+sudo add-apt-repository --yes --update ppa:ansible/ansible
+
+- Install Ansible
+sudo apt install -y ansible
+
+ansible --version
+
+Install Ansible Using pip (For a Specific Version)
+- install Ansible via pip (Python package manager)
+
+- Install python and pip
+sudo apt install -y python3 python3-pip
+
+- Install Ansible using pip
+pip3 install --user ansible
+
+- Add ansible to system PATH
+echo 'export PATH=$HOME/.local/bin:$PATH' >> ~/.bashrc
+source ~/.bashrc
+
+ansible --version
+
+#Post-Installation Configuration
+
+- Check Ansible Modules & Plugins
+ansible-doc -l | less
+
+- Configure an Inventory File (/etc/ansible/hosts)
+sudo nano /etc/ansible/hosts
+
+- Add the following
+[web_servers]
+192.168.1.10
+192.168.1.11
+
+- Test Connection to a Remote Host
+ansible all -m ping -i /etc/ansible/hosts
+
+----------------------------------------------------------
+
+
+
+
+
+
+  
