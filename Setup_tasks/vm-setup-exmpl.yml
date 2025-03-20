@@ -46,6 +46,13 @@
     - name: List installed packages in virtual environment
       command: /opt/my_venv/bin/pip list
       register: pip_list_output
+    
+    - name: Upgrade pip in virtual environment
+      command: /opt/my_venv/bin/pip install pandas
+
+    - name: List installed packages in virtual environment again
+      command: /opt/my_venv/bin/pip list
+      register: pip_list_output2
 
     - name: Display Python version
       debug:
@@ -57,4 +64,16 @@
 
     - name: Display installed packages
       debug:
-        msg: "Installed Packages:\n{{ pip_list_output.stdout }}"
+        msg: "Installed Packages:{{ pip_list_output.stdout }}"
+    
+    - name: Display installed packages again
+      debug:
+        msg: "{{ item }}"
+      loop: "{{ pip_list_output2.stdout_lines }}"
+    
+    - name: Extract and display package names and versions
+      debug:
+        msg: "{{ item.split()[:2] | join(' - ') }}"
+      loop: "{{ pip_list_output2.stdout_lines[2:] }}"  # Skipping header lines
+      loop_control:
+        label: ""  # Removes "(item=...)" from the output
