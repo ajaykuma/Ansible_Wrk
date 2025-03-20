@@ -144,6 +144,48 @@ ssh-copy-id -i $HOME/.ssh/id_rsa.pub ans@m2
 ansible-playbook -i Inventory/hosts.ini Setup_tasks/vm-setup-exmpl.yml --ask-become-pass
 
 --Check for output
+------------------------------------------------------------
+Task 3: Running playbook pointing to a role that has one or more tasks
+--Create or modify your project structure
+
+Ansible_Wrk
+  Inventory
+    vm-setup-playbook
+      hosts.ini
+  roles
+    python
+      tasks
+        main.yml
+    README.MD
+    setup-playbook.yml
+
+--Here main.yml contains
+- name: Create directory
+  file:
+    path: /home/ans/mydata
+    state: directory
+
+- name: install apache2
+  become: yes
+  apt: name=apache2 update_cache=yes state=latest
+
+#Start & enable a Service/server
+- name: Start and enable nginx
+  service:
+    name: apache2
+    state: started
+    enabled: yes
+
+--and setup-playbook.yml contains
+---
+- name: Example ansible playbook
+  hosts: all
+  remote_user: ans
+  roles:
+   - python
+
+--Now run the playbook
+ansible-playbook -i Inventory/hosts.ini roles/setup-playbook.yml --ask-become-pass
 
 
 
