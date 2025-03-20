@@ -1,0 +1,284 @@
+#In an Ansible playbook, tasks are actions executed on remote or local machines.
+
+1. File & Directory Management
+--creating a Directory
+
+- name: Create a directory
+  file:
+    path: /opt/my_directory
+    state: directory
+    mode: '0755'
+
+--creating an empty file
+- name: Create an empty file
+  file:
+    path: /tmp/myfile.txt
+    state: touch
+
+--delete a file
+- name: Remove a file
+  file:
+    path: /tmp/myfile.txt
+    state: absent
+
+2. Package Management
+--Install packages (deb based systems)
+- name: Install multiple packages
+  apt:
+    name:
+      - python3
+      - git
+      - curl
+    state: present
+
+--Install packages (redhat based systems)
+- name: Install multiple packages
+  yum:
+    name:
+      - python3
+      - git
+      - curl
+    state: present
+
+--remove packages
+- name: Remove nginx
+  apt:
+    name: nginx
+    state: absent
+
+3. Service Management
+--Start & enable a Service
+- name: Start and enable nginx
+  service:
+    name: nginx
+    state: started
+    enabled: yes
+
+--Stop a service
+- name: Stop nginx
+  service:
+    name: nginx
+    state: stopped
+
+--Restart a service
+- name: Restart nginx
+  service:
+    name: nginx
+    state: restarted
+
+4. User & Group Management
+--Create a User
+- name: Create a user
+  user:
+    name: myuser
+    shell: /bin/bash
+
+--Delete a user
+- name: Remove a user
+  user:
+    name: myuser
+    state: absent
+
+--Create a Group
+- name: Create a group
+  group:
+    name: mygroup
+    state: present
+
+5. File Copy & Templates
+--Copy file to remote machine
+- name: Copy a file to the server
+  copy:
+    src: myfile.txt
+    dest: /tmp/myfile.txt
+
+--Copy file using template (jinja2)
+- name: Copy a templated configuration file
+  template:
+    src: myconfig.j2
+    dest: /etc/myconfig.conf
+
+6. Command Execution
+--Run a shell Command
+- name: Execute a shell command
+  command: echo "Hello, World!"
+
+--Run a shell script
+- name: Run a script
+  script: /path/to/myscript.sh
+
+--Run a command and register output
+- name: Get system uptime
+  command: uptime
+  register: uptime_result
+
+- name: Display uptime
+  debug:
+    msg: "System uptime: {{ uptime_result.stdout }}"
+
+7. Git & Repository Management
+--Clone a git Repository
+- name: Clone a Git repository
+  git:
+    repo: https://github.com/example/repo.git
+    dest: /opt/repo
+
+--Pull latest changes
+- name: Pull latest changes in Git repo
+  git:
+    repo: https://github.com/example/repo.git
+    dest: /opt/repo
+    update: yes
+
+8. Environment & Python Virtual Environments
+--Set an Environment variable
+- name: Set an environment variable
+  lineinfile:
+    path: /etc/environment
+    line: "MY_VAR=my_value"
+
+--Create python virtual environment
+- name: Create a Python virtual environment
+  command: python3 -m venv /opt/my_venv
+
+9. Networking & Firewall
+--Open a port in UFW (Ubuntu firewall)
+- name: Allow SSH in UFW
+  ufw:
+    rule: allow
+    port: 22
+    proto: tcp
+
+--Configure firewall rules in firewalld (RHEL based systems)
+- name: Allow HTTP traffic in Firewalld
+  firewalld:
+    service: http
+    permanent: yes
+   
+#Statuses
+When we run an Ansible playbook, we see different statuses for each task. 
+These statuses indicate whether the task was executed successfully, changed something, or encountered an issue.
+
+1. OK (Green)
+The task was executed successfully, but no changes were made.
+This happens when the desired state was already present before running the task
+
+Example:
+Task:
+- name: Ensure directory exists
+  file:
+    path: /opt/my_directory
+    state: directory
+
+Output:
+TASK [Ensure directory exists] **********
+ok: [server]
+
+2. CHANGED (Yellow)
+The task was executed successfully and made changes to the system.
+This means the previous state was different, and Ansible modified it.
+
+Example:
+Task:
+- name: Install apache
+  apt:
+    name: apache2
+    state: present
+
+Output:
+TASK [Install apache] ***************
+changed: [server]
+
+Note** If X was not installed before running the task, Ansible installs it and marks the task as CHANGED.
+
+3. FAILED (Red)
+The task failed due to an error.
+The playbook execution stops (unless ignore_errors: yes is set).
+
+Example:
+Task:
+- name: Start a non-existing service
+  service:
+    name: fake_service
+    state: started
+
+Output:
+TASK [Start a non-existing service] ********
+fatal: [server]: FAILED! => {"msg": "Could not find the service"}
+
+--to handle errors
+- name: Start a non-existing service
+  service:
+    name: fake_service
+    state: started
+  ignore_errors: yes  # This prevents the playbook from stopping on failure
+
+4. SKIPPED (Blue) 
+The task was skipped because a condition (when) wasn’t met.
+
+Example:
+Task:
+- name: Install Apache only on Ubuntu
+  apt:
+    name: apache2
+    state: present
+  when: ansible_os_family == "Debian"
+
+Output:
+--If target machine is not Debian/Ubuntu:
+TASK [Install Apache only on Ubuntu] ************
+skipping: [server]
+
+5. UNREACHABLE (Red)
+The target host is not reachable (e.g., SSH issues, network problems).
+
+Output:
+UNREACHABLE! => {"msg": "Failed to connect to the host via SSH"}
+
+Reasons could be:
+Wrong IP / Hostname → Check the inventory file.
+SSH Key Issues → Ensure SSH keys/passwords are correct.
+Firewall Blocking SSH → Check firewall settings.
+
+6. RESCUED (Handled Failure)
+Used inside rescue blocks when a failure is caught and handled.
+
+Example:
+Task:
+- name: Try to start a service
+  block:
+    - name: Start my_service
+      service:
+        name: my_service
+        state: started
+  rescue:
+    - name: Print an error message
+      debug:
+        msg: "Service start failed, but continuing execution..."
+
+Note- If the service fails to start, Ansible doesn’t stop the playbook but handles the error instead.
+
+7. IGNORED (Failure ignored)
+This happens when ignore_errors: yes is used in a task that fails.
+The task fails, but the playbook continues execution.
+
+Example:
+Task:
+- name: Try to install a non-existent package
+  apt:
+    name: fake_package
+    state: present
+  ignore_errors: yes
+
+If fake_package doesn’t exist, the task fails but is ignored.
+
+--------------------------------------------------------------------------------------
+
+
+
+
+
+
+
+
+

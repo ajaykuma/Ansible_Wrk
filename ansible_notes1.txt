@@ -116,8 +116,34 @@ ans ALL=(ALL) NOPASSWD: ALL
 
 Now, run the playbook without requiring a sudo password.
 
+-----------------------------------------------------
+Task 2: Running setup task for a remote machine
+On machine2 i.e. m2 
+Login as 'ans' user and being in home directory
 
+--Generate ssh keys
+ssh-keygen -t rsa -P ""
 
+--Copy ssh public keys to itself and to other machine
+cat $HOME/.ssh/id_rsa.pub >> $HOME/.ssh/authorized_keys
+ssh-copy-id -i $HOME/.ssh/id_rsa.pub ans@m1
+
+--from m1
+ssh-copy-id -i $HOME/.ssh/id_rsa.pub ans@m2
+
+--Test ssh access from each machine to other machine
+
+--Now update the hosts.ini file to point to remote server
+
+--check on remote machine if it has
+  Python installed
+  Any directory such as /opt/my_venv
+  If pip installed?
+
+--Now run the ansible playbook to setup 
+ansible-playbook -i Inventory/hosts.ini Setup_tasks/vm-setup-exmpl.yml --ask-become-pass
+
+--Check for output
 
 
 

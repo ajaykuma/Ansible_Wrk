@@ -31,6 +31,9 @@
       command: /usr/bin/python3.8 -m venv /opt/my_venv
       args:
         creates: /opt/my_venv/bin/activate
+    
+    #command to activate venv in linux is : source /opt/my_venv/bin/activate (to manually check)
+    #command to deactivate when in venv: (my_venv) ans@m2:/$ deactivate
 
     - name: Upgrade pip in virtual environment
       command: /opt/my_venv/bin/pip install --upgrade pip
