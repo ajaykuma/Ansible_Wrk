@@ -1,17 +1,60 @@
 ---
-- name: installing packages for python env
+- name: Setup Python Virtual Environment with Verification
+  hosts: all
   become: yes
-  apt:
-    name:
-     -  python3-pip
-    update_cache: yes
+  tasks:
+    - name: Ensure required packages are installed
+      apt:
+        name:
+          - python3.8 # Change to your desired version
+          - python3.8-venv
+          - python3.8-distutils
+          - python3-pip
+        state: present
+      when: ansible_os_family == "Debian"
 
-- name: Creates directory
-  file:
-    path: ./basic-http-server
-    state: directory
-  
-- name: install apache2
-  become: yes
-  apt: name-apache2 update_cache=yes state=latest
+    #- name: Ensure required packages are installed
+    #  yum:
+    #    name:
+    #      - python3.10  # Change to your desired version
+    #      - python3-pip
+    #    state: present
+    #  when: ansible_os_family == "RedHat"
 
+    - name: Create a directory for the virtual environment
+      file:
+        path: /opt/my_venv
+        state: directory
+        mode: '0755'
+
+    - name: Create Python virtual environment with specific version
+      command: /usr/bin/python3.8 -m venv /opt/my_venv
+      args:
+        creates: /opt/my_venv/bin/activate
+
+    - name: Upgrade pip in virtual environment
+      command: /opt/my_venv/bin/pip install --upgrade pip
+
+    - name: Check Python version in virtual environment
+      command: /opt/my_venv/bin/python --version
+      register: python_version_output
+
+    - name: Check Pip version in virtual environment
+      command: /opt/my_venv/bin/pip --version
+      register: pip_version_output
+
+    - name: List installed packages in virtual environment
+      command: /opt/my_venv/bin/pip list
+      register: pip_list_output
+
+    - name: Display Python version
+      debug:
+        msg: "Python Version: {{ python_version_output.stdout }}"
+
+    - name: Display Pip version
+      debug:
+        msg: "Pip Version: {{ pip_version_output.stdout }}"
+
+    - name: Display installed packages
+      debug:
+        msg: "Installed Packages:\n{{ pip_list_output.stdout }}"

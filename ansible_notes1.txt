@@ -72,6 +72,50 @@ sudo nano /etc/ansible/hosts
 ansible all -m ping -i /etc/ansible/hosts
 
 ----------------------------------------------------------
+Task 1: Login as 'ans' user and being in home directory
+
+--setup ssh access to your host 
+ssh-keygen -t rsa -P ""
+cat $HOME/,ssh/id_rsa.pub >> $HOME/.ssh/authorized_keys
+
+--Test ssh to your host such as 
+ssh ans@m1
+
+--setup 'hosts.ini' file containing
+[my-host]
+172.28.78.1 ansible_ssh_private_key_file=home/ans/.ssh/id_rsa
+
+--setup 'vm-setup-exmpl.yml' file containing your instructions
+
+--Run your playbook
+ans@m1:~/Downloads/Ansible_Wrk$ ansible-playbook -i Inventory/hosts.ini Setup_tasks/vm-setup-exmpl.yml
+
+--If it complains/fails needing root pswd "msg": "Missing sudo password" which means
+--the Ansible playbook requires become: yes (sudo privileges), but Ansible is not getting the sudo password.
+
+Option 1: Provide the Sudo Password Interactively
+ans@m1:~/Downloads/Ansible_Wrk$ ansible-playbook -i Inventory/hosts.ini Setup_tasks/vm-setup-exmpl.yml --ask-become-pass
+
+Option 2: Add the Sudo Password to the Ansible Vault (Secure)
+You can store the sudo password in an Ansible Vault-encrypted file and use it in the playbook:
+--Create a vault file:
+ansible-vault create sudo_password.yml
+
+--Add the following content
+ansible_become_pass: "your_sudo_password"
+
+--Use the vault file in your playbook
+ansible-playbook -i inventory_file playbook.yml --extra-vars "@sudo_password.yml" --ask-vault-pass
+
+Option 3:
+Set Up a Passwordless Sudo User (Best for Automation)
+--to make ssh access password less
+sudo visudo
+ans ALL=(ALL) NOPASSWD: ALL
+<save>
+
+Now, run the playbook without requiring a sudo password.
+
 
 
 
