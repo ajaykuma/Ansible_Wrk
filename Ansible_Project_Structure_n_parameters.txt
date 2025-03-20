@@ -9,7 +9,7 @@ Ansible_Wrk
       tasks
         main.yml
     README.MD
-    vm-setup-playbook.yml
+    setup-playbook.yml
 
 
 hosts.ini > contains <ip addresses/hostnames> and details of machines/servers<ssh private keys>
@@ -18,8 +18,7 @@ Note** we can create multiple hosts file within Inventory directory
 For every playbook we can have multiple roles and each role can have a task.
 for example as shown above: main.yml file contains instructions to setup and install python and other relevant tasks.
 
-vm-setup-playbook.yml is the main ansible playbook and this will contain details pointing to hosts file and tasks file.
-
+setup-playbook.yml is the main ansible playbook and this will contain details pointing to hosts file and tasks file.
 
 OR we could have one playbook which contains everything.
 
@@ -27,20 +26,12 @@ As per project structure above we would have:
 
 main.yml
 ---
-- name: Example ansible playbook
-  hosts: all
-  remote_user: ubuntu
-  roles:
-   - python
-
-vm-setup-playbook.yml
----
-- name: installing packages for python env
-  become: yes
-  apt:
-    name:
-      - python3-pip
-    update_cache: yes
+#- name: installing packages for python env
+#  become: yes
+#  apt:
+#    name:
+#      - python3-pip
+#    update_cache: yes
 
 - name: Create directory
   file:
@@ -50,6 +41,14 @@ vm-setup-playbook.yml
 - name: install apache2
   become: yes
   apt: name=apache2 update_cache=yes state=latest
+
+setup-playbook.yml
+---
+- name: Example ansible playbook
+  hosts: all
+  remote_user: ans
+  roles:
+   - python
 
 Note**
 Commonly used parameters
