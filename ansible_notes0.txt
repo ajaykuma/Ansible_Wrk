@@ -1,3 +1,5 @@
+#TASKS
+-----
 #In an Ansible playbook, tasks are actions executed on remote or local machines.
 
 1. File & Directory Management
@@ -154,8 +156,10 @@
   firewalld:
     service: http
     permanent: yes
-   
-#Statuses
+
+--------------------------------------------------------------------
+#STATUSES
+
 When we run an Ansible playbook, we see different statuses for each task. 
 These statuses indicate whether the task was executed successfully, changed something, or encountered an issue.
 
@@ -273,6 +277,7 @@ Task:
 If fake_package doesn’t exist, the task fails but is ignored.
 
 --------------------------------------------------------------------------------------
+#MODULES
 
 
 
