@@ -72,6 +72,9 @@ sudo nano /etc/ansible/hosts
 ansible all -m ping -i /etc/ansible/hosts
 
 ----------------------------------------------------------
+#Shortcut to comment or uncomment a block of code
+#ctrl + k + c
+#ctrl + k + u
 Task 1: Login as 'ans' user and being in home directory
 
 --setup ssh access to your host 
@@ -187,7 +190,68 @@ Ansible_Wrk
 --Now run the playbook
 ansible-playbook -i Inventory/hosts.ini roles/setup-playbook.yml --ask-become-pass
 
+----Output-----
+PLAY [Example ansible playbook] **********************************************************************************************************************
 
+TASK [Gathering Facts] *******************************************************************************************************************************
+ok: [172.28.78.1]
+
+TASK [python : Create directory] *********************************************************************************************************************
+ok: [172.28.78.1]
+
+TASK [python : install apache2] **********************************************************************************************************************
+changed: [172.28.78.1]
+
+TASK [python : Start and enable nginx] ***************************************************************************************************************
+ok: [172.28.78.1]
+
+PLAY RECAP *******************************************************************************************************************************************
+172.28.78.1                : ok=4    changed=1    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+
+ans@m1:~/Downloads/Ansible_Wrk$ service apache2 status
+● apache2.service - The Apache HTTP Server
+     Loaded: loaded (/lib/systemd/system/apache2.service; enabled; vendor preset: enabled)
+     Active: active (running) since Thu 2025-03-20 19:48:03 CET; 41s ago
+       Docs: https://httpd.apache.org/docs/2.4/
+   Main PID: 4328 (apache2)
+      Tasks: 55 (limit: 5784)
+     Memory: 4.8M
+     CGroup: /system.slice/apache2.service
+             ├─4328 /usr/sbin/apache2 -k start
+             ├─4329 /usr/sbin/apache2 -k start
+             └─4330 /usr/sbin/apache2 -k start
+
+Mär 20 19:48:03 m1 systemd[1]: Starting The Apache HTTP Server...
+Mär 20 19:48:03 m1 apachectl[4327]: AH00558: apache2: Could not reliably determine the server's fully qualified domain name, using 172.28.78.1. Set t>
+Mär 20 19:48:03 m1 systemd[1]: Started The Apache HTTP Server.
+
+
+----Output ends----
+------------------------------------------------------------
+Task 4: Update the main.yml
+--comment out apache2 installation
+--add command to check status
+#- name: install apache2
+#  become: yes
+#  apt: name=apache2 update_cache=yes state=latest
+
+#Start & enable a Service/server
+- name: Start and enable apache2
+  service:
+    name: apache2
+    state: started
+    enabled: yes
+
+#check status of service and register output
+- name: Get status of apache2
+  command: service apache2 status
+  register: apache_server_status
+
+- name: Display status
+  debug:
+    msg: "Status: {{ apache_server_status.stdout }}"
+
+--------------------------
 
 
   
