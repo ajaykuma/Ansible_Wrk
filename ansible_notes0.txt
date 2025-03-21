@@ -279,6 +279,62 @@ If fake_package doesn’t exist, the task fails but is ignored.
 --------------------------------------------------------------------------------------
 #MODULES
 
+> File & Directory Management Modules
+
+file:	Creates, removes, or modifies files and directories
+copy:	Copies a file from the control node to the target
+fetch: Fetches a file from the remote host to the control node
+template:	Copies a file with Jinja2 templating
+lineinfile:	Modifies a specific line in a file
+replace: Replaces text in a file using regex
+stat: Checks file metadata
+find: Searches for files in a directory
+unarchive: Extracts compressed files (tar, zip)
+
+> Package Management Modules
+apt:	Manages APT packages
+yum:	Manages YUM packages
+dnf:	Manages DNF packages
+zypper:	Manages Zypper packages
+homebrew:	Manages Homebrew packages
+chocolatey:	Manages Chocolatey packages
+
+> Service Management Modules
+service:	Manages system services
+systemd: Manages services via systemd
+supervisorctl:	Manages Supervisor services
+
+> User & Group Management Modules
+user: Manages user accounts
+group: Manages groups
+
+> Command Execution Modules
+command: Runs a shell command without using a shell
+shell:	Runs a command in a shell (bash, sh)
+script:	Runs a script from the control node
+raw:	Runs a command without using Python
+
+> Networking Modules
+ufw:	Manages UFW firewall rules
+firewalld:	Manages Firewalld rules
+iptables:	Manages iptables rules
+uri:	Fetches data from an API
+
+> Database Modules
+mysql_db:	Creates or removes MySQL databases
+mysql_user:	Manages MySQL users
+postgresql_db:	Manages PostgreSQL databases
+postgresql_user:	Manages PostgreSQL users
+
+> Cloud & Container Modules
+docker_container:	Manages Docker containers
+docker_image:	Manages Docker images
+k8s	Manages: Kubernetes resources
+aws_ec2:	Manages AWS EC2 instances
+gcp_compute:	Manages Google Cloud instances
+
+-----------------------------------
+
 
 
 
