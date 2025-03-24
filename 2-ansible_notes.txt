@@ -6,7 +6,8 @@ Setup Ansible
   - apt update (to update each machine)
   - setup NAT/Host only adaptor for communication across machines using different IP addresses
 
-Ansible is not installed by default on Ubuntu, but you can easily install it using APT (default package manager) or PPA (Personal Package Archive).
+Ansible is not installed by default on Ubuntu, but you can easily install it using APT (default package manager) 
+or PPA (Personal Package Archive).
 
 Install Ansible from Ubuntu Repositories (Recommended for Stability)
 - Ubuntu 22.04 provides Ansible in its official repositories.
@@ -60,7 +61,7 @@ ansible --version
 - Check Ansible Modules & Plugins
 ansible-doc -l | less
 
-- Configure an Inventory File (/etc/ansible/hosts)
+- Configure an Inventory File (/etc/ansible/hosts) or in preferred project location
 sudo nano /etc/ansible/hosts
 
 - Add the following
@@ -75,6 +76,7 @@ ansible all -m ping -i /etc/ansible/hosts
 #Shortcut to comment or uncomment a block of code
 #ctrl + k + c
 #ctrl + k + u
+----------------------------------------------------------
 Task 1: Login as 'ans' user and being in home directory
 
 --setup ssh access to your host 
@@ -107,8 +109,14 @@ ansible-vault create sudo_password.yml
 --Add the following content
 ansible_become_pass: "your_sudo_password"
 
+-----------
+ansible-vault create Setup_tasks/sudo_password.yml
+New Vault password: 
+Confirm New Vault password: 
+------------
 --Use the vault file in your playbook
-ansible-playbook -i inventory_file playbook.yml --extra-vars "@sudo_password.yml" --ask-vault-pass
+ansible-playbook -i Inventory/hosts.ini Setup_tasks/vm-setup-exmpl.yml --extra-vars "@Setup_tasks/sudo_pass
+word.yml" --ask-vault-pass
 
 Option 3:
 Set Up a Passwordless Sudo User (Best for Automation)
@@ -118,7 +126,6 @@ ans ALL=(ALL) NOPASSWD: ALL
 <save>
 
 Now, run the playbook without requiring a sudo password.
-
 -----------------------------------------------------
 Task 2: Running setup task for a remote machine
 On machine2 i.e. m2 
@@ -148,6 +155,12 @@ ansible-playbook -i Inventory/hosts.ini Setup_tasks/vm-setup-exmpl.yml --ask-bec
 
 --Check for output
 ------------------------------------------------------------
+Roles: 
+Refer: Ansible_Project_Structure_n_roles_n_parameters.txt file
+To create a role:
+ansible-galaxy init testrole
+- Role testrole was created successfully
+
 Task 3: Running playbook pointing to a role that has one or more tasks
 --Create or modify your project structure
 
@@ -211,7 +224,7 @@ PLAY RECAP *********************************************************************
 ans@m1:~/Downloads/Ansible_Wrk$ service apache2 status
 ● apache2.service - The Apache HTTP Server
      Loaded: loaded (/lib/systemd/system/apache2.service; enabled; vendor preset: enabled)
-     Active: active (running) since Thu 2025-03-20 19:48:03 CET; 41s ago
+
        Docs: https://httpd.apache.org/docs/2.4/
    Main PID: 4328 (apache2)
       Tasks: 55 (limit: 5784)
@@ -221,9 +234,9 @@ ans@m1:~/Downloads/Ansible_Wrk$ service apache2 status
              ├─4329 /usr/sbin/apache2 -k start
              └─4330 /usr/sbin/apache2 -k start
 
-Mär 20 19:48:03 m1 systemd[1]: Starting The Apache HTTP Server...
-Mär 20 19:48:03 m1 apachectl[4327]: AH00558: apache2: Could not reliably determine the server's fully qualified domain name, using 172.28.78.1. Set t>
-Mär 20 19:48:03 m1 systemd[1]: Started The Apache HTTP Server.
+Mär 12 19:48:03 m1 systemd[1]: Starting The Apache HTTP Server...
+Mär 12 19:48:03 m1 apachectl[4327]: AH00558: apache2: Could not reliably determine the server's fully qualified domain name, using 172.28.78.1. Set t>
+Mär 12 19:48:03 m1 systemd[1]: Started The Apache HTTP Server.
 
 
 ----Output ends----

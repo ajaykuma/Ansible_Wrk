@@ -4,7 +4,7 @@ Ansible provides various features to enhance automation efficiency,
 -- Pooling
 -- and Delegation.
 
-Accelerated Mode: (Ansible removed Accelerated Mode in version 2.4 due to security reasons and lack
+Accelerated Mode: Ansible removed Accelerated Mode in version 2.4 due to security reasons and lack
 of maintenance, instead we can use SSH multiplexing.
 
 For accelerated mode :
@@ -15,7 +15,7 @@ Considerations:  Requires Python installed on the remote system and can be less 
 
 Run Ansible with the --accelerated flag or enable it in the config file (/etc/ansible/ansible.cfg)
 
-Task x: Using Ansible Accelerated Mode for Managing Hosts Behind a Firewall
+Task 7: Using Ansible Accelerated Mode for Managing Hosts Behind a Firewall
 
 Note** Ansible's Accelerated Mode can be useful when managing hosts behind a firewall, 
 as it reduces SSH connection overhead and speeds up execution. It 
@@ -297,4 +297,5 @@ SSH Multiplexing (ControlPath) improves performance by reusing SSH connections.
 Fact Gathering helps Ansible determine system details (like OS type).
 Each task execution is logged step-by-step, showing what Ansible runs on the remote host.
 Play Recap at the end summarizes successes and failures.
+
 

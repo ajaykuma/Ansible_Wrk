@@ -19,7 +19,6 @@ For every playbook we can have multiple roles and each role can have a task.
 for example as shown above: main.yml file contains instructions to setup and install python and other relevant tasks.
 
 setup-playbook.yml is the main ansible playbook and this will contain details pointing to hosts file and tasks file.
-
 OR we could have one playbook which contains everything.
 
 As per project structure above we would have:
