@@ -1,0 +1,412 @@
+Task 5: Working with file and directory management Modules
+        Command Execution & Modules, parameters
+
+--create a kafka-setup-exmpl.yml file.
+    Installs OpenJDK 11 (required for Kafka)
+    Downloads Kafka from https://archive.apache.org/dist/kafka/2.8.2/kafka_2.13-2.8.2.tgz
+    Extracts Kafka into a directory called kafka
+    Sets up environment variables
+    Starts Zookeeper and Kafka using default settings
+
+ansible-playbook -i Inventory/hosts.ini Setup_tasks/kafka-setup-exmpl.yml --ask-become-pass
+
+Notes** (About script)
+
+To check processes:
+-------------------
+Commands:
+
+ps aux | grep kafka
+ps aux | grep zookeeper
+
+For shell commands:
+-------------------
+When running commands using the shell module, async and poll control how the task is executed in the background.
+
+> async (Timeout for the command)
+
+-- Specifies how long (in seconds) Ansible should allow the command to run.
+-- If the command doesn't complete within this time, Ansible terminates it.
+
+   Example:
+   - name: Run a long-running command
+     shell: "sleep 30"
+     async: 60
+     poll: 0
+   
+   Here, sleep 30 command will run for 30 seconds, but Ansible allows up to 60 seconds before timing out.
+
+> poll (Check for completion)
+
+-- poll: 0 makes Ansible run the command in the background and move to the next task immediately.
+-- poll: X (where X is a number) makes Ansible check the command status every X seconds until it completes.
+
+Understanding Handlers:
+-----------------------
+> Handlers in Ansible are special tasks that only run when notified by another task. 
+They are typically used for actions that should only happen when something changes 
+(e.g., restarting a service after a configuration update).
+
+-- A task notifies a handler when it makes a change.
+-- The handler runs at the end of the playbook execution (unless forced immediately using flush_handlers).
+-- If no change happens, the handler is not triggered.
+
+   Example:
+   In our case handler would run only if .bashrc is updated.
+
+Running Handlers immediately
+By default, handlers run at the end of a playbook.
+To run a handler immediately, use flush_handlers:
+
+    Example:
+    - name: Run handlers now
+      meta: flush_handlers  # This forces handlers to run immediately
+
+    handlers:
+    - name: Restart MyApp
+      service:
+        name: myapp
+        state: restarted
+
+> blockinfile:
+The blockinfile module in Ansible is used to insert, update, or remove a block of text within a file. 
+This is useful for managing configuration files, environment variables, or scripts without modifying the entire file.
+
+In our example:
+If .bashrc exists, it adds the block inside the file.
+If .bashrc does not exist, it creates it (create: yes).
+If the block already exists, Ansible does not duplicate it.
+
+Key features in blockinfile:
+Feature	Description
+path	The file to modify
+block	The text block to insert
+marker	Custom markers to identify the block
+insertbefore / insertafter	Define where to insert the block
+create	If yes, creates the file if it doesn’t exist
+
+    Example:
+    - name: Add a custom config block
+      blockinfile:
+        path: /etc/app.conf
+        block: |
+            setting1=true
+            setting2=false
+        marker: "# === APP CONFIG === {mark}"  # Custom markers
+
+    Output would be:
+    # === APP CONFIG === BEGIN
+s   etting1=true
+    setting2=false
+    # === APP CONFIG === END
+
+    Example:
+    Insert Before/after
+    - name: Insert a block **before** a specific line
+      blockinfile:
+        path: /etc/app.conf
+        block: |
+            setting1=true
+        insertbefore: "[Database]"
+
+    Output:
+     This places setting1=true right before [Database] in the config file.
+
+Note**
+--Files updated using blockinfile remain changed even after Ansible finishes running.
+--Ansible modifies the file permanently unless the playbook runs again and updates it.
+--If the playbook runs again, it checks whether the block already exists and does not duplicate it.
+--If you run the playbook again, Ansible checks if the block exists.
+--If the block is unchanged, Ansible does nothing.
+--If the block is different, Ansible updates it.
+--To remove block: Use state: absent to remove the block
+
+Displaying output of a shell command:
+--using the register and debug modules
+
+    Example: Print uname -a Output
+    - name: Get system information
+      shell: uname -a
+      register: system_info
+
+    - name: Display output
+      debug:
+      var: system_info.stdout
+    
+    Output: This captures the output of uname -a and prints it.
+
+    Example: List Installed Python Packages
+    - name: Get list of installed Python packages
+      shell: pip list
+      register: pip_packages
+
+    - name: Display package list
+      debug:
+      var: pip_packages.stdout_lines  # Prints output line by line
+
+    Output: The stdout_lines option ensures the output is displayed line by line instead of a single long string.
+
+    Example: Check Kafka Process
+    - name: Check if Kafka is running
+      shell: "ps aux | grep kafka | grep -v grep"
+      register: kafka_process
+
+    - name: Display Kafka process details
+      debug:
+      var: kafka_process.stdout_lines
+
+    Output: This filters out the grep command itself from the results.
+
+    Example: Print Both stdout and stderr
+    - name: Run a command and capture both outputs
+      shell: ls /nonexistent_directory
+      register: command_output
+      ignore_errors: yes  # Avoid failure if command errors
+
+    - name: Show standard output
+      debug:
+        var: command_output.stdout
+
+    - name: Show error output
+      debug:
+        var: command_output.stderr
+
+    Output: If a command fails, stderr captures the error message.
+
+    To Debug any errors: ansible-playbook myplaybook.yml -vvv
+    (this shows deatiled output)
+
+---Output-------
+PLAY [Install OpenJDK, Download Kafka, and Start Services] ****************************************************************************
+
+TASK [Gathering Facts] ****************************************************************************************************************
+ok: [172.28.78.1]
+
+TASK [Install dependencies (OpenJDK 11, wget, tar)] ***********************************************************************************
+ok: [172.28.78.1]
+
+TASK [Verify Java installation] *******************************************************************************************************
+ok: [172.28.78.1]
+
+TASK [Print Java version] *************************************************************************************************************
+ok: [172.28.78.1] => {
+    "msg": [
+        "openjdk version \"11.0.26\" 2025-01-12",
+        "OpenJDK Runtime Environment (build 11.0.26+4-post-Ubuntu-1ubuntu120.04)",
+        "OpenJDK 64-Bit Server VM (build 11.0.26+4-post-Ubuntu-1ubuntu120.04, mixed mode, sharing)"
+    ]
+}
+
+TASK [Create Kafka directory] *********************************************************************************************************
+ok: [172.28.78.1]
+
+TASK [Download Kafka archive] *********************************************************************************************************
+ok: [172.28.78.1]
+
+TASK [Extract Kafka archive] **********************************************************************************************************
+ok: [172.28.78.1]
+
+TASK [Set environment variables in .bashrc] *******************************************************************************************
+ok: [172.28.78.1]
+
+TASK [Start Zookeeper] ****************************************************************************************************************
+changed: [172.28.78.1]
+
+TASK [Wait for Zookeeper to start] ****************************************************************************************************
+Pausing for 5 seconds
+(ctrl+C then 'C' = continue early, ctrl+C then 'A' = abort)
+ok: [172.28.78.1]
+
+TASK [Start Kafka] ********************************************************************************************************************
+changed: [172.28.78.1]
+
+TASK [Wait for kafka to start] ********************************************************************************************************
+Pausing for 5 seconds
+(ctrl+C then 'C' = continue early, ctrl+C then 'A' = abort)
+ok: [172.28.78.1]
+
+TASK [Test kafka] *********************************************************************************************************************
+changed: [172.28.78.1]
+
+TASK [Chesk status of kafka] **********************************************************************************************************
+[WARNING]: Consider using 'become', 'become_method', and 'become_user' rather than running sudo
+changed: [172.28.78.1]
+
+TASK [Display status] *****************************************************************************************************************
+ok: [172.28.78.1] => {
+    "msg": "Status: Topic: Test2\tTopicId: 6-WdATJ0T12xMB8hM7DRJA\tPartitionCount: 1\tReplicationFactor: 1\tConfigs: segment.bytes=1073741824\n\tTopic: Test2\tPartition: 0\tLeader: 0\tReplicas: 0\tIsr: 0"
+}
+
+PLAY RECAP ****************************************************************************************************************************
+172.28.78.1                : ok=15   changed=4    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+
+---Output ends-----
+
+-------------------------------------------
+Task 6 : Kafka setup on a remote machine
+
+--create a kafka-setup-exmpl2.yml file to run tasks on remote machine (m2)
+    Installs OpenJDK 11 (required for Kafka)
+    Downloads Kafka from https://archive.apache.org/dist/kafka/2.8.2/kafka_2.13-2.8.2.tgz
+    Extracts Kafka into a directory called kafka
+    Sets up environment variables
+    Starts Zookeeper and Kafka using default settings
+
+--modify hosts.ini file to point to remote machine
+
+ansible-playbook -i Inventory/hosts.ini Setup_tasks/kafka-setup-exmpl2.yml --ask-become-pass
+
+Note**
+Loop:
+loop directive is used to execute a task multiple times with different values. 
+This helps avoid redundant code by iterating over lists, dictionaries, or complex data structures.
+
+(as shown in kafka-setup-exmpl2.yml for checking scripts)
+
+  #Installing Multiple Packages (sequentially)
+  Example 1: 
+  - name: Install multiple packages
+    ansible.builtin.apt:
+      name: "{{ item }}"
+      state: present
+    loop:
+      - nginx
+      - git
+      - curl
+
+  #loop through a list of dictionaries
+  Example 2:
+  - name: Create users
+    ansible.builtin.user:
+      name: "{{ item.name }}"
+      state: present
+      groups: "{{ item.groups }}"
+  loop:
+    - { name: "ans", groups: "sudo" }
+    - { name: "ans2", groups: "developers" }
+  
+  Example 3: Looping with with_items (Deprecated), now replaced with loop.
+
+  Example 4:  Nested Loops with subelements i.e. loop through nested dictionaries using subelements
+  Here we assign multiple SSH keys to multiple users.
+
+  - name: Assign SSH keys to users
+    ansible.builtin.authorized_key:
+      user: "{{ item.0.name }}"
+      key: "{{ item.1 }}"
+    loop: "{{ users | subelements('ssh_keys') }}"
+    vars:
+      users:
+        - name: ans
+          ssh_keys:
+            - "ssh-rsa AAAAB..."
+            - "ssh-rsa BBBBC..."
+        - name: ans2
+          ssh_keys:
+            - "ssh-rsa CCCCD..."
+
+  Example 5: Loop Control: Skipping & Custom Index
+  - name: Create directories
+    ansible.builtin.file:
+      path: "/home/{{ item }}/projects"
+      state: directory
+    loop:
+      - ans
+      - ans2
+      - ans3
+    loop_control:
+      pause: 2  # Adds a 2-second pause between iterations
+
+  Example 6: Registering Output from Loops (using register)
+  - name: Ping multiple hosts
+    ansible.builtin.ping:
+    loop:
+      - server1
+      - server2
+      - server3
+    register: ping_results
+
+  - name: Display Ping Results
+    ansible.builtin.debug:
+      msg: "{{ ping_results.results }}"
+
+Refer and test : setup-users-and-access.yml
+ansible-playbook -i Inventory/hosts.ini Setup_tasks/setup-users-and-access.yml --ask-become-pass
+--using vault
+ansible-playbook -i Inventory/hosts.ini Setup_tasks/setup-users-and-access.yml
+--extra-vars "@Setup_tasks/sudo_password.yml" --ask-vault-pass
+
+chdir: the chdir (change directory) parameter is used with command-related modules to specify 
+a directory where the command should be executed. It ensures that the task runs in the correct working directory.
+
+Example:
+- name: List files inside a directory
+  ansible.builtin.shell: ls -l
+  args:
+    chdir: /var/log
+
+----Output-----
+PLAY [Install and Set Up Kafka and Zookeeper] *******************************************************************************
+
+TASK [Gathering Facts] ******************************************************************************************************
+ok: [172.28.212.48]
+
+TASK [Install OpenJDK 11] ***************************************************************************************************
+changed: [172.28.212.48]
+
+TASK [Create Kafka directory] ***********************************************************************************************
+changed: [172.28.212.48]
+
+TASK [Download Kafka] *******************************************************************************************************
+changed: [172.28.212.48]
+
+TASK [Extract Kafka] ********************************************************************************************************
+changed: [172.28.212.48]
+
+TASK [Ensure Kafka and Zookeeper scripts are executable] ********************************************************************
+ok: [172.28.212.48] => (item=zookeeper-server-start.sh)
+ok: [172.28.212.48] => (item=kafka-server-start.sh)
+
+TASK [Start Zookeeper] ******************************************************************************************************
+changed: [172.28.212.48]
+
+TASK [Start Kafka Server] ***************************************************************************************************
+changed: [172.28.212.48]
+
+TASK [Verify Kafka and Zookeeper processes] *********************************************************************************
+changed: [172.28.212.48]
+
+TASK [Display running Kafka and Zookeeper processes] ************************************************************************
+ok: [172.28.212.48] => {
+    "kafka_process.stdout_lines": [
+        "root       15256  3.3  0.7 2527680 28020 ?       Sl   20:22   0:00 java -Xmx512M -Xms512M -server 
+        -XX:+UseG1GC -XX:MaxGCPauseMillis=20 -XX:InitiatingHeapOccupancyPercent=35 -XX:+ExplicitGCInvokesConcurrent 
+        -XX:MaxInlineLevel=15 -Djava.awt.headless=true 
+        -Xlog:gc*:file=/home/ans/kafka/bin/../logs/zookeeper-gc.log:time,tags:filecount=10,filesize=100M 
+        -Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.authenticate=false 
+        -Dcom.sun.management.jmxremote.ssl=false -Dkafka.logs.dir=/home/ans/kafka/bin/../logs 
+        -Dlog4j.configuration=file:/home/ans/kafka/bin/../config/log4j.properties 
+        -cp /home/ans/kafka/bin/../libs/activation-1.1.1.jar:/home/ans/kafka/bin/..
+        /libs/aopalliance-repackaged-2.6.1.jar:/home/ans/kafka/bin/../libs/argparse4j-0.7.0.jar:/home/ans/kafka/bin/..
+        ....
+        org.apache.zookeeper.server.quorum.QuorumPeerMain /home/ans/kafka/config/zookeeper.properties",
+        
+        "root       15604  2.0  0.1   9968  3884 ?        S    20:22   0:00 /bin/bash /home/ans/kafka/bin/kafka-run-class.sh 
+        -name kafkaServer -loggc kafka.Kafka /home/ans/kafka/config/server.properties"
+    ]
+}
+
+PLAY RECAP ******************************************************************************************************************
+172.28.212.48              : ok=10   changed=7    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0 
+
+
+----Output ends-----
+
+
+
+
+
+
+
+
+
