@@ -81,7 +81,7 @@ Task 1: Login as 'ans' user and being in home directory
 
 --setup ssh access to your host 
 ssh-keygen -t rsa -P ""
-cat $HOME/,ssh/id_rsa.pub >> $HOME/.ssh/authorized_keys
+cat $HOME/.ssh/id_rsa.pub >> $HOME/.ssh/authorized_keys
 
 --Test ssh to your host such as 
 ssh ans@m1
