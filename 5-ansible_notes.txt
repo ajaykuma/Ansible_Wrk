@@ -59,7 +59,9 @@ sudo apt update && sudo apt install -y \
 sudo systemctl start docker
 sudo systemctl enable docker
 
-    #Install the AWX Operator
+sudo git clone https://github.com/ansible/awx.git
+
+#Install the AWX Operator
     git clone https://github.com/ansible/awx-operator.git
     cd awx-operator
 
