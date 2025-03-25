@@ -1,3 +1,6 @@
+get the repo:
+sudo git clone https://github.com/ansible/awx.git
+
 --Download image from web
 
 docker pull wep4you/awx-operator
