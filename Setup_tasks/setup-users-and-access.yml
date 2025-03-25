@@ -66,7 +66,7 @@
         - ans3
 
     - name: Verify if users have sudo access
-      ansible.builtin.command: "sudo -l -U {{ item }}"
+      command: sudo -l -U {{ item }}
       register: sudo_check_results
       ignore_errors: yes
       loop:
@@ -76,4 +76,5 @@
 
     - name: Display sudo access check results
       ansible.builtin.debug:
-        msg: "{{ sudo_check_results.results }}"
+        #msg: "{{ sudo_check_results.results}}"
+        var: sudo_check_results
