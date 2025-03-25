@@ -1,0 +1,10 @@
+--Download image from web
+
+docker pull wep4you/awx-operator
+wep4you/awx-operator
+
+sudo docker images
+
+--build docker-compose.yml file with  content as in .yml file
+
+sudo docker-compose -f docker-compose.yml up

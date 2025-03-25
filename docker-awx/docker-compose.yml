@@ -1,0 +1,9 @@
+version: '3'
+
+services:
+   awx-operator:
+      image: wep4you/awx-operator 
+      container_name: awx
+      ports:
+              - "8052:8052"
+               
