@@ -1,7 +1,7 @@
 Task 5: Working with file and directory management Modules
         Command Execution & Modules, parameters
 
---create a kafka-setup-exmpl.yml file.
+--create a kafka-setup-exmpl_0.yml file.
     Installs OpenJDK 11 (required for Kafka)
     Downloads Kafka from https://archive.apache.org/dist/kafka/2.8.2/kafka_2.13-2.8.2.tgz
     Extracts Kafka into a directory called kafka
@@ -176,7 +176,69 @@ Displaying output of a shell command:
     To Debug any errors: ansible-playbook myplaybook.yml -vvv
     (this shows deatiled output)
 
+The ansible-playbook 
+if doesn't include direct full paths for binaries ,will fail:
+
+Why?
+blockinfile modifies .bashrc, but source in handlers won't work
+Issue:
+The handler cannot affect the current Ansible session because 
+source /root/.bashrc only modifies the shell environment 
+for that session (which Ansible does not retain).
+
+we can even uncomment the flush_handlers option and check.
+
+We can thus:
+Instead of relying on .bashrc, set the environment inline when running Kafka.
+
+    - name: Set Kafka environment variables
+      lineinfile:
+        path: /etc/environment
+        line: "{{ item }}"
+      loop:
+        - 'KAFKA_HOME=/home/ans/kafka/kafka_2.13-2.8.2'
+        - 'PATH=$PATH:$KAFKA_HOME/bin'
+        - 'JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64'
+
+However if playbook is run with this update, it wll still fail.
+Even though we've updated /etc/environment with Kafka's bin/ directory, 
+this change doesn't affect the current session of the shell where the 
+Ansible tasks are running. 
+The changes made to /etc/environment take effect after a system reboot or a session reload.
+
+Non-interactive shell: Ansible commands are run in a non-interactive shell that doesn't 
+source the .bashrc or /etc/environment automatically. 
+As a result, the Kafka bin/ directory might not be included in the PATH during the 
+execution of the tasks.
+
+We can thus:
+Use the environment directive to add Kafka to PATH
+environment:
+    PATH: "/home/ans/kafka/kafka_2.13-2.8.2/bin:{{ ansible_env.PATH }}"
+
+> async: 30, poll: 0 does not manage services properly (ok but not a good way)
+Issue:
+Using shell with nohup  may result in process which might not persist properly across reboots
+or long running processes.
+
+We can thus:
+Use systemd service files for managing Zookeeper and Kafka.
+
+> Instead of waiting with a fixed pause, check if the services are actually running.
+  (if started as services)
+
+Fix:
+Use wait_for to check Kafka’s port.
+    - name: Wait for Kafka to be ready
+      wait_for:
+        port: 9092
+        delay: 5
+        timeout: 30
+
+
+Run: kafka-setup-exmpl_1.yml to check
 -------------------------------------------
+
 Task 6 : Kafka setup on a remote machine
 
 --create a kafka-setup-exmpl2.yml file to run tasks on remote machine (m2)
@@ -273,6 +335,8 @@ Example:
   args:
     chdir: /var/log
 
+------------------------------------
+Task 7: working with users and loops
 Refer and test : setup-users-and-access.yml
 ansible-playbook -i Inventory/hosts.ini Setup_tasks/setup-users-and-access.yml --ask-become-pass
 --using vault

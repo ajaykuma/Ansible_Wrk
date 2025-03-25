@@ -1,0 +1,161 @@
+---
+- name: Install OpenJDK, Download Kafka, and Start Services
+  hosts: all
+  become: yes
+  tasks:
+
+    - name: Install dependencies (OpenJDK 11, wget, tar)
+      apt:
+        name:
+          - openjdk-11-jdk
+          - wget
+          - tar
+        state: present
+        update_cache: yes
+
+    - name: Verify Java installation
+      command: java -version
+      register: java_output
+      changed_when: false
+
+    - name: Print Java version
+      debug:
+        msg: "{{ java_output.stderr_lines }}"
+
+    - name: Create Kafka directory
+      file:
+        path: /home/ans/kafka
+        state: directory
+        mode: '0755'
+
+    - name: Download Kafka archive
+      get_url:
+        url: "https://archive.apache.org/dist/kafka/2.8.2/kafka_2.13-2.8.2.tgz"
+        dest: "/home/ans/kafka/kafka_2.13-2.8.2.tgz"
+        mode: '0644'
+
+    - name: Extract Kafka archive
+      unarchive:
+        src: "/home/ans/kafka/kafka_2.13-2.8.2.tgz"
+        dest: "/home/ans/kafka"
+        remote_src: yes
+
+    # - name: Set environment variables in .bashrc
+    #   blockinfile:
+    #     path: ~/.bashrc
+    #     block: |
+    #       export KAFKA_HOME=/home/ans/kafka/kafka_2.13-2.8.2
+    #       export PATH=$PATH:$KAFKA_HOME/bin
+    #       export JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
+    #     create: yes
+    #   notify: Reload shell
+
+    # - name: Set Kafka environment variables
+    #   lineinfile:
+    #     path: /etc/environment
+    #     line: "{{ item }}"
+    #   loop:
+    #     - 'KAFKA_HOME=/home/ans/kafka/kafka_2.13-2.8.2'
+    #     - 'PATH=$PATH:$KAFKA_HOME/bin'
+    #     - 'JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64'
+    
+    # - name: Run handlers now
+    #   meta: flush_handlers  # This forces handlers to run immediately
+    
+    # # - name: Create systemd service for Zookeeper
+    # #   copy:
+    # #     dest: /etc/systemd/system/zookeeper.service
+    # #     content: |
+    # #       [Unit]
+    # #       Description=Apache Zookeeper
+    # #       After=network.target
+
+    # #       [Service]
+    # #       Type=simple
+    # #       ExecStart=/home/ans/kafka/kafka_2.13-2.8.2/bin/zookeeper-server-start.sh /home/ans/kafka/kafka_2.13-2.8.2/config/zookeeper.properties
+    # #       ExecStop=/home/ans/kafka/kafka_2.13-2.8.2/bin/zookeeper-server-stop.sh
+    # #       Restart=always
+    # #       User=ans
+
+    # #       [Install]
+    # #       WantedBy=multi-user.target
+
+    # # - name: Create systemd service for Kafka
+    # #   copy:
+    # #     dest: /etc/systemd/system/kafka.service
+    # #     content: |
+    # #       [Unit]
+    # #       Description=Apache Kafka
+    # #       After=zookeeper.service
+
+    # #       [Service]
+    # #       Type=simple
+    # #       ExecStart=/home/ans/kafka/kafka_2.13-2.8.2/bin/kafka-server-start.sh /home/ans/kafka/kafka_2.13-2.8.2/config/server.properties
+    # #       ExecStop=/home/ans/kafka/kafka_2.13-2.8.2/bin/kafka-server-stop.sh
+    # #       Restart=always
+    # #       User=ans
+
+    # #       [Install]
+    # #       WantedBy=multi-user.target
+
+    # # - name: Reload systemd to apply changes
+    # #   systemd:
+    # #     daemon_reload: yes
+
+    # - name: Start and enable Zookeeper
+    #   systemd:
+    #     name: zookeeper
+    #     state: started
+    #     enabled: yes
+
+    # - name: Start and enable Kafka
+    #   systemd:
+    #     name: kafka
+    #     state: started
+    #     enabled: yes
+
+    - name: Start Zookeeper
+      shell: "nohup zookeeper-server-start.sh /home/ans/kafka/kafka_2.13-2.8.2/config/zookeeper.properties &"
+      environment:
+        PATH: "/home/ans/kafka/kafka_2.13-2.8.2/bin:{{ ansible_env.PATH }}"
+      async: 30
+      poll: 0
+
+    - name: Wait for Zookeeper to start
+      pause:
+        seconds: 10
+
+    - name: Start Kafka
+      shell: "nohup kafka-server-start.sh /home/ans/kafka/kafka_2.13-2.8.2/config/server.properties &"
+      environment:
+        PATH: "/home/ans/kafka/kafka_2.13-2.8.2/bin:{{ ansible_env.PATH }}"
+      async: 30
+      poll: 0
+
+    - name: Wait for kafka to start
+      pause:
+        seconds: 10
+
+    - name: Test kafka
+      shell: "kafka-topics.sh --create --topic Test2 --bootstrap-server m1:9092 --partitions 1 --replication-factor 1"
+      environment:
+        PATH: "/home/ans/kafka/kafka_2.13-2.8.2/bin:{{ ansible_env.PATH }}"
+      async: 5
+      poll: 0
+
+    - name: Chesk status of kafka
+      shell: "kafka-topics.sh --describe --bootstrap-server m1:9092"
+      environment:
+        PATH: "/home/ans/kafka/kafka_2.13-2.8.2/bin:{{ ansible_env.PATH }}"
+      register: kafka_status
+
+    - name: Display status
+      debug:
+        msg: "Status: {{ kafka_status.stdout_lines}}"
+
+  # handlers:
+  #   - name: Reload shell
+  #     command: source ~/.bashrc
+
+
+

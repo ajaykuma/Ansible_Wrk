@@ -44,23 +44,26 @@
       blockinfile:
         path: ~/.bashrc
         block: |
-          export KAFKA_HOME=~/kafka/kafka_2.13-2.8.2
+          export KAFKA_HOME=/home/ans/kafka/kafka_2.13-2.8.2
           export PATH=$PATH:$KAFKA_HOME/bin
           export JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
         create: yes
       notify: Reload shell
-
+    
+    # - name: Run handlers now
+    #   meta: flush_handlers  # This forces handlers to run immediately
+    
     - name: Start Zookeeper
-      shell: "sudo nohup /home/ans/kafka/kafka_2.13-2.8.2/bin/zookeeper-server-start.sh /home/ans/kafka/kafka_2.13-2.8.2/config/zookeeper.properties &"
+      shell: "nohup sudo zookeeper-server-start.sh /home/ans/kafka/kafka_2.13-2.8.2/config/zookeeper.properties &"
       async: 30
       poll: 0
 
     - name: Wait for Zookeeper to start
       pause:
-        seconds: 5
+        seconds: 10
 
     - name: Start Kafka
-      shell: "sudo nohup kafka-server-start.sh /home/ans/kafka/kafka_2.13-2.8.2/config/server.properties &"
+      shell: "nohup sudo kafka-server-start.sh /home/ans/kafka/kafka_2.13-2.8.2/config/server.properties &"
       async: 30
       poll: 0
 
@@ -69,12 +72,12 @@
         seconds: 5
 
     - name: Test kafka
-      shell: "sudo kafka-topics.sh --create --topic Test2 --bootstrap-server m1:9092 --partitions 1 --replication-factor 1"
+      shell: "kafka-topics.sh --create --topic Test1 --bootstrap-server localhost:9092 --partitions 1 --replication-factor 1"
       async: 5
       poll: 0
 
     - name: Chesk status of kafka
-      shell: "sudo kafka-topics.sh --describe --bootstrap-server m1:9092"
+      shell: "kafka-topics.sh --describe --bootstrap-server localhost:9092"
       register: kafka_status
 
     - name: Display status
@@ -83,6 +86,7 @@
 
   handlers:
     - name: Reload shell
-      shell: source ~/.bashrc
+      shell: source /root/.bashrc
+
 
 

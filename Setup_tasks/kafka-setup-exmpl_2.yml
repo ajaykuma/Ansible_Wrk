@@ -43,6 +43,8 @@
       shell: "nohup /home/ans/kafka/bin/zookeeper-server-start.sh /home/ans/kafka/config/zookeeper.properties &"
       args:
         chdir: /home/ans/kafka
+      # environment:
+      #   PATH: "/home/ans/kafka/kafka_2.13-2.8.2/bin:{{ ansible_env.PATH }}"
       async: 300
       poll: 0
 
