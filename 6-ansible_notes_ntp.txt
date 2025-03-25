@@ -1,0 +1,16 @@
+Working with NTP and error handling:
+----------------
+Checks the status of the ntp service, and if it is not found, install ntp, 
+starts the service, and then confirm if the service is running.
+> error handling using failed_when, ignore_errors, and when conditions.
+
+Checks the status of the NTP service.
+If found, it logs the output.
+If not found (rc != 0), it continues instead of failing immediately.
+Handles errors gracefully.
+Uses ignore_errors: yes to prevent playbook failure during service check.
+Uses ansible.builtin.fail to provide a custom error message.
+Installs and starts NTP only if missing.
+The when condition ensures installation happens only if the service was not found.
+Verifies and displays the final service status.
+Ensures NTP is running after installation.

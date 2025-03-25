@@ -1,0 +1,42 @@
+---
+- name: Ensure NTP Service is Installed and Running
+  hosts: all
+  become: yes
+  tasks:
+
+    - name: Check if NTP service exists
+      command: systemctl status ntp
+      register: ntp_status
+      ignore_errors: yes  # Allow failure if NTP is not installed
+
+    - name: Debug NTP Check Output
+      ansible.builtin.debug:
+        msg: "NTP Service Check Output: {{ ntp_status.stdout_lines | default('Service not found') }}"
+
+    - name: Handle error if NTP is missing
+      ansible.builtin.fail:
+        msg: "NTP service is not installed. Proceeding to install..."
+      when: ntp_status.rc != 0
+
+    - name: Install NTP (if missing)
+      ansible.builtin.apt:
+        name: ntp
+        state: present
+        update_cache: yes
+      when: ntp_status.rc != 0
+
+    - name: Start and Enable NTP Service
+      ansible.builtin.service:
+        name: ntp
+        state: started
+        enabled: yes
+      when: ntp_status.rc != 0
+
+    - name: Verify NTP Service Status After Fix
+      command: systemctl status ntp
+      register: ntp_final_status
+      changed_when: false
+
+    - name: Display Final NTP Status
+      ansible.builtin.debug:
+        msg: "{{ ntp_final_status.stdout_lines }}"
