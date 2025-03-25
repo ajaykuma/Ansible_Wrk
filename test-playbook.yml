@@ -2,9 +2,13 @@
   hosts: all
   gather_facts: no
   tasks:
-
     - name: Check Ansible playbook syntax
-      ansible.builtin.command: "ansible-playbook --syntax-check main.yml"
+      #command: "ansible-playbook --syntax-check Setup_tasks/kafka-setup-exmpl_0.yml"
+      ansible.builtin.command:
+        argv:
+        - ansible-playbook
+        - --syntax-check
+        - /home/ans/Downloads/Ansible_Wrk/Setup_tasks/kafka-setup-exmpl_0.yml
       register: syntax_check
       changed_when: false
 
@@ -13,7 +17,7 @@
         msg: "{{ syntax_check.stdout_lines }}"
 
     - name: Run playbook in check mode (dry run)
-      ansible.builtin.command: "ansible-playbook --check main.yml"
+      command: ansible-playbook --check /home/ans/Downloads/Ansible_Wrk/Setup_tasks/kafka-setup-exmpl_0.yml
       register: dry_run
       changed_when: false
 
