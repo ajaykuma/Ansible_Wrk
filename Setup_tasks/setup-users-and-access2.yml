@@ -1,0 +1,70 @@
+- name: Manage hosts if behind a firewall
+  hosts: all
+  become: yes
+  tasks:
+    - name: Ensure UFW is installed
+      apt:
+        name: ufw
+        state: present
+
+    - name: Enable UFW
+      ufw:
+        state: enabled
+
+    - name: Allow Ansible SSH
+      ufw:
+        rule: allow
+        port: 22
+        proto: tcp
+
+- name: Setup Admin Users
+  hosts: all
+  become: yes
+  vars:
+    admin_users:
+      - ans
+      - ans2
+      - ans3
+  tasks:
+    - name: Ensure 'adminuser' group exists
+      ansible.builtin.group:
+        name: adminuser
+        state: present
+
+    - name: Create admin users, home directories, and grant sudo access
+      ansible.builtin.user:
+        name: "{{ item }}"
+        groups: adminuser
+        append: yes
+        state: present
+        create_home: yes
+      loop: "{{ admin_users }}"
+
+    - name: Ensure correct permissions for home directories
+      ansible.builtin.file:
+        path: "/home/{{ item }}"
+        state: directory
+        owner: "{{ item }}"
+        group: adminuser
+        mode: '0755'
+      loop: "{{ admin_users }}"
+      loop_control:
+        pause: 2
+
+    - name: Grant sudo access to admin users
+      ansible.builtin.lineinfile:
+        path: /etc/sudoers.d/adminusers
+        line: "{{ item }} ALL=(ALL) NOPASSWD:ALL"
+        create: yes
+        validate: 'visudo -cf %s'
+      loop: "{{ admin_users }}"
+
+    - name: Verify if users have sudo access
+      command: sudo -l -U {{ item }}
+      register: sudo_check_results
+      ignore_errors: yes
+      loop: "{{ admin_users }}"
+
+    - name: Display sudo access check results
+      ansible.builtin.debug:
+        var: sudo_check_results
