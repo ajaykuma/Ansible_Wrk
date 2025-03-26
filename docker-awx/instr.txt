@@ -1,5 +1,9 @@
 get the repo:
-sudo git clone https://github.com/ansible/awx.git
+git clone https://github.com/ansible/awx.git
+ 
+or visit the page if git is downloaded correctly
+https://github.com/ansible/awx/tree/17.1.0
+
 
 --Download image from web
 
