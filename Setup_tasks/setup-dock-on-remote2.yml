@@ -1,0 +1,71 @@
+- name: Setup Environment and Install Packages
+  hosts: myhost
+  become: no
+  vars_prompt:
+    - name: package_name
+      prompt: "Enter the package name(s) to install (comma-separated)"
+      private: no
+
+  tasks:
+    - name: Ensure the host_vars directory exists
+      ansible.builtin.file:
+        path: host_vars
+        state: directory
+        mode: '0755'
+
+    - name: Convert package input into a list
+      ansible.builtin.set_fact:
+        package_list: "{{ package_name.split(',') | map('trim') | list }}"
+
+    - name: Detect service names from package names
+      ansible.builtin.set_fact:
+        service_list: "{{ package_list | map('regex_replace', '^docker.*', 'docker') | list }}"
+
+    - name: Save package and service names in host_vars
+      ansible.builtin.copy:
+        dest: /home/ans/Downloads/Ansible_Wrk/host_vars/target_nodes.yml
+        content: |
+          package_name: {{ package_list }}
+          service_name: {{ service_list }}
+        mode: '0644'
+
+- name: Install Packages and Ensure Services Running
+  hosts: myhost
+  become: yes
+  vars_files:
+    - /home/ans/Downloads/Ansible_Wrk/host_vars/target_nodes.yml
+
+  tasks:
+    - name: Install required packages
+      ansible.builtin.apt:
+        name: "{{ package_name }}"
+        state: present
+        update_cache: yes
+
+    - name: Ensure the service is started
+      ansible.builtin.systemd:
+        name: "{{ item }}"
+        state: started
+        enabled: yes  # Ensure the service starts on boot
+        daemon_reload: yes  # Reload systemd daemon in case service changes
+      loop: "{{ service_name }}"
+      register: service_start_result
+      failed_when: service_start_result.failed  # Explicitly fail the task if starting the service fails
+
+    - name: Check if the service is running
+      ansible.builtin.systemd:
+        name: "{{ item }}"
+        state: started
+      loop: "{{ service_name }}"
+      register: service_status
+      ignore_errors: yes
+
+    - name: Start the service if not running
+      ansible.builtin.systemd:
+        name: "{{ item }}"
+        state: started
+        enabled: yes
+      when: service_status.results[ansible_loop.index0].status is not defined or service_status.results[ansible_loop.index0].status != "running"
+      loop: "{{ service_name }}"
+        
+  #Note**

@@ -1,0 +1,64 @@
+# /home/ans/Downloads/Ansible_Wrk/tasks/main.yml
+---
+- name: Load package variables
+  ansible.builtin.include_vars:
+    file: "/home/ans/Downloads/Ansible_Wrk/newrole/vars/packages.yml"
+
+- name: Install Apache2
+  ansible.builtin.apt:
+    name: "{{ apache_package }}"
+    state: present
+    update_cache: yes
+
+- name: Install Python3.8
+  ansible.builtin.apt:
+    name: "{{ python_package }}"
+    state: present
+    update_cache: yes
+
+- name: Install Nginx
+  ansible.builtin.apt:
+    name: "{{ nginx_package }}"
+    state: present
+    update_cache: yes
+
+- name: Install Docker
+  ansible.builtin.apt:
+    name: "{{ docker_package }}"
+    state: present
+    update_cache: yes
+
+
+- name: Ensure Apache2 service is started
+  ansible.builtin.systemd:
+    name: apache2
+    state: started
+    enabled: yes
+
+- name: Ensure Python3.8 service is started
+  ansible.builtin.systemd:
+    name: python3.8
+    state: started
+    enabled: yes
+  ignore_errors: yes  # Python may not have a service
+
+# - name: Ensure Nginx service is started
+#   ansible.builtin.systemd:
+#     name: nginx
+#     state: started
+#     enabled: yes
+
+# - name: Set custom port for Nginx
+#   ansible.builtin.lineinfile:
+#     path: /etc/nginx/sites-available/default
+#     regexp: '^\s*listen\s+80;'
+#     line: "    listen 8080;"
+#     backup: yes
+#   notify: Restart Nginx  # Calls the handler to restart Nginx
+
+- name: Ensure Docker service is started
+  ansible.builtin.systemd:
+    name: docker
+    state: started
+    enabled: yes
+

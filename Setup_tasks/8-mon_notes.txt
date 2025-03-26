@@ -1,0 +1,107 @@
+#Integrating with External Monitoring Tools
+Prometheus monitoring solution is a free and open-source solution for monitoring metrics, 
+events, and alerts. It collects and records metrics from servers, containers, and applications. 
+In addition to providing a flexible query language (PromQL), and powerful visualization 
+tools, it also provides an alerting mechanism that sends notifications when needed.
+
+sudo groupadd --system prometheus
+sudo useradd -s /sbin/nologin --system -g prometheus prometheus
+sudo mkdir /etc/prometheus
+sudo mkdir /var/lib/prometheus
+wget https://github.com/prometheus/prometheus/releases/download/v2.43.0/prometheus-2.43.0.linux-amd64.tar.gz
+tar vxf prometheus*.tar.gz
+cd prometheus*/
+
+move some binary files (prometheus and promtool) and 
+change the ownership of the files to the "prometheus" user and group:
+
+sudo mv prometheus /usr/local/bin
+sudo mv promtool /usr/local/bin
+sudo chown prometheus:prometheus /usr/local/bin/prometheus
+sudo chown prometheus:prometheus /usr/local/bin/promtool
+
+move the configuration files and set their ownership so that Prometheus can access them:
+
+sudo mv consoles /etc/prometheus
+sudo mv console_libraries /etc/prometheus
+sudo mv prometheus.yml /etc/prometheus
+
+sudo chown prometheus:prometheus /etc/prometheus
+sudo chown -R prometheus:prometheus /etc/prometheus/consoles
+sudo chown -R prometheus:prometheus /etc/prometheus/console_libraries
+sudo chown -R prometheus:prometheus /var/lib/prometheus
+
+The prometheus.yml file is the main Prometheus configuration file. It includes settings for targets to be monitored, data scraping frequency, data 
+processing, and storage. You can set alerting rules and notification conditions in the file. 
+
+sudo nano /etc/prometheus/prometheus.yml
+
+Create service:
+sudo nano /etc/systemd/system/prometheus.service
+
+Add contents:
+[Unit]
+Description=Prometheus
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+User=prometheus
+Group=prometheus
+Type=simple
+ExecStart=/usr/local/bin/prometheus \
+    --config.file /etc/prometheus/prometheus.yml \
+    --storage.tsdb.path /var/lib/prometheus/ \
+    --web.console.templates=/etc/prometheus/consoles \
+    --web.console.libraries=/etc/prometheus/console_libraries
+
+[Install]
+WantedBy=multi-user.target
+
+Note**
+The "systems" service file for Prometheus defines how Prometheus should be managed 
+as a system service on Ubuntu. It includes the service configuration, such as the 
+user and group it should run as. It also includes the path to the Prometheus binary 
+and the Prometheus configuration file location.
+
+sudo systemctl daemon-reload
+
+sudo systemctl enable prometheus
+sudo systemctl start prometheus
+
+--check status
+sudo systemctl status prometheus
+
+Prometheus runs on port 9090 by default so you need to allow port 9090 on your firewall
+sudo ufw allow 9090/tcp
+
+Access:
+http://localhost:9090
+
+Prometheus expects a numerical value for CPU load, but uptime returns a string with extra data.
+You need to extract only the 1-minute CPU load.
+
+Prometheus Pushgateway URL
+
+If you are using http://localhost:9090/metrics/job/ansible, 
+Prometheus does not accept metrics via direct POST.
+
+Instead, Pushgateway should be used: http://<pushgateway-ip>:9091/metrics/job/ansible.
+Now additionals:
+sudo apt install prometheus-pushgateway
+sudo systemctl enable --now prometheus-pushgateway
+
+update prometheus.yml
+scrape_configs:
+  - job_name: 'pushgateway'
+    static_configs:
+      - targets: ['localhost:9091']
+
+--restart
+sudo systemctl restart prometheus
+
+
+
+
+
+

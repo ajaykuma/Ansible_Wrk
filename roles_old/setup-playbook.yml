@@ -1,0 +1,6 @@
+- name: Setup Python Virtual Environment with Verification
+  hosts: all
+  become: yes
+  roles:
+    - python
+    - apache

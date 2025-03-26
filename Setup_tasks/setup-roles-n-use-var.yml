@@ -1,0 +1,91 @@
+- name: Initialize Ansible Project with New Role
+  hosts: myhost
+  become: no
+  
+  tasks:
+    - name: Create project directory structure
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+        mode: '0755'
+      loop:
+
+        - /home/ans/Downloads/Ansible_Wrk/newrole
+        - /home/ans/Downloads/Ansible_Wrk/newrole/tasks
+        - /home/ans/Downloads/Ansible_Wrk/newrole/vars
+
+    # - name: Initialize newrole using ansible-galaxy
+    #   command: "ansible-galaxy init newrole --force"
+    #   args:
+    #     chdir: /home/ans/Downloads/Ansible_Wrk
+    
+    #this block will fail with The task includes an option with an undefined variable
+    #variables here are defined within the tasks, making them local to each task. 
+    #They were not available globally. To fix that, I moved these variables outside of the 
+    #tasks and placed them in the top part of the main.yml file within the vars section. 
+    #This ensures they are available to all tasks in the role.
+
+    #- name: Create tasks for Apache2, Python, Nginx, Docker in newrole
+    #   ansible.builtin.copy:
+    #     dest: /home/ans/Downloads/Ansible_Wrk/newrole/tasks/main.yml
+    #     content: |
+    #       - name: Install Apache2
+    #         ansible.builtin.apt:
+    #           name: "{{ apache_package }}"
+    #           state: present
+    #           update_cache: yes
+    #         # vars:
+    #         #   apache_package: apache2
+
+    #       - name: Install Python3.8
+    #         ansible.builtin.apt:
+    #           name: "{{ python_package }}"
+    #           state: present
+    #           update_cache: yes
+    #         # vars:
+    #         #   python_package: python3.8
+
+    #       - name: Install Nginx
+    #         ansible.builtin.apt:
+    #           name: "{{ nginx_package }}"
+    #           state: present
+    #           update_cache: yes
+    #         # vars:
+    #         #   nginx_package: nginx
+
+    #       - name: Install Docker
+    #         ansible.builtin.apt:
+    #           name: "{{ docker_package }}"
+    #           state: present
+    #           update_cache: yes
+    #         # vars:
+    #         #   docker_package: docker.io
+
+    #       - name: Ensure Apache2 service is started
+    #         ansible.builtin.systemd:
+    #           name: apache2
+    #           state: started
+    #           enabled: yes
+
+    #       - name: Ensure Python3.8 service is started
+    #         ansible.builtin.systemd:
+    #           name: python3.8
+    #           state: started
+    #           enabled: yes
+    #         # Python may not always have a service; adjust accordingly if needed.
+
+    #       - name: Ensure Nginx service is started
+    #         ansible.builtin.systemd:
+    #           name: nginx
+    #           state: started
+    #           enabled: yes
+
+    #       - name: Ensure Docker service is started
+    #         ansible.builtin.systemd:
+    #           name: docker
+    #           state: started
+    #           enabled: yes
+
+    #     mode: '0644'
+
+    

@@ -9,13 +9,15 @@ of maintenance, instead we can use SSH multiplexing.
 
 For accelerated mode :
 
-Ansible’s Accelerated Mode reduces the overhead of SSH connections by using a persistent daemon on remote hosts.
+Ansible’s Accelerated Mode reduces the overhead of SSH connections by using a persistent daemon
+ on remote hosts.
 Benefit: Speeds up execution by avoiding repetitive SSH connections.
 Considerations:  Requires Python installed on the remote system and can be less secure than SSH.
 
 Run Ansible with the --accelerated flag or enable it in the config file (/etc/ansible/ansible.cfg)
+-------------------------------------------------------
 
-Task 7: Using Ansible Accelerated Mode for Managing Hosts Behind a Firewall
+Task 8: Using Ansible Accelerated Mode for Managing Hosts Behind a Firewall
 
 Note** Ansible's Accelerated Mode can be useful when managing hosts behind a firewall, 
 as it reduces SSH connection overhead and speeds up execution. It 
@@ -53,12 +55,20 @@ accelerate_daemon_timeout = 30
 # is "no".
 accelerate_multi_key = yes
 
-2.  Create playbook to Manage Hosts Behind a Firewall: (setup-using-accmod.yml)
+2.  Create playbook to Manage Hosts Behind a Firewall: (refer: setup-using-accmod.yml)
 
-3.  Run the playbook with Accelerated mode: (accelerated mode deprecated in newer versions)
+3.  Run the playbook with Accelerated mode: (Note** accelerated mode is deprecated in new versions)
 ansible-playbook -i Inventory/inventory.ini playbook.yml --accelerated --ask-become-pass
 
-4. Create inventory.ini file 
+Note**
+What we would need
+  -- ansible.cfg to modify settings (if not existing in /etc/ansible then we can create it)
+     (refer: 0_ansible_notes.txt)
+
+  --Looking at default config settings and creating ansible.cfg
+  <more details>
+
+Create inventory.ini file 
 [webservers]
 web1 ansible_host=192.168.1.100 ansible_user=ubuntu ansible_ssh_private_key_file=~/.ssh/id_rsa
 web2 ansible_host=192.168.1.101 ansible_user=ubuntu ansible_ssh_private_key_file=~/.ssh/id_rsa
@@ -71,8 +81,8 @@ In the Ansible inventory (inventory.ini) , we have two groups:
 [webservers] → Represents the actual servers (e.g., web servers) that Ansible will manage.
 In our case m1 and m2.
 
-[firewall_hosts] → Represents a firewall device that may need configuration to allow Ansible to communicate with 
-web servers.
+[firewall_hosts] → Represents a firewall device that may need configuration to allow Ansible to 
+communicate with web servers.
 In our case lets say m1.
 
 Why Grouping is good:
@@ -115,16 +125,19 @@ or via task in playbook such as:
 
 Steps to run this playbook:
 --check if firewall is disabled on each node. (manually sudo ufw status) -- Not active
---check if apache2 is installed and running as service on each node --installed and running on m1, not existing on m2.
+--check if apache2 is installed and running as service on each node --installed and running on m1, 
+  not existing on m2.
 --update inventory.ini file
 --make sure ansible.cfg is updated.
 --run playbook as 
-ansible-playbook -i Inventory/inventory.ini Setup_tasks/setup-using-accmod.yml --accelerated --ask-become-p
-ass
+ansible-playbook -i Inventory/inventory.ini Setup_tasks/setup-using-accmod.yml --accelerated 
+--ask-become-pass 
+(note** it may fail depending on your version)
 
 SSH Multiplexing:
 Since Accelerated Mode is deprecated, 
 the best way to speed up Ansible execution is by enabling SSH control persist (multiplexing).
+
 > Enable SSH Multiplexing in ansible.cfg
 
 [ssh_connection]
@@ -143,9 +156,43 @@ SSH multiplexing works at the SSH client level, not in the inventory.
 Ansible will automatically use the ssh_args settings from ansible.cfg.
 The inventory file remains the same and continues to define hosts, usernames, and SSH keys.
 
-ansible-playbook -i Inventory/inventory.ini Setup_tasks/setup-using-accmod.yml --ask-become-p
-ass
----output-----
+We could enable SSH Multiplexing by modifying SSH config (~/.ssh/config):
+Host *
+    ControlMaster auto
+    ControlPath ~/.ssh/mux-%r@%h:%p
+    ControlPersist 10m
+
+ControlMaster auto → Allows multiplexing if possible.
+ControlPath ~/.ssh/mux-%r@%h:%p → Defines a socket file for connection reuse.
+ControlPersist 10m → Keeps the connection open for 10 minutes after the last command.
+
+The placeholders %r, %h, and %p are SSH escape sequences that get replaced dynamically when an 
+SSH connection is established.
+
+%r → Remote Username
+Replaced by the username used for the SSH connection (e.g., ubuntu, root).
+
+%h → Remote Host
+Replaced by the hostname or IP address of the remote server.
+
+%p → Remote Port
+Replaced by the port number used for the connection (default is 22).
+
+For example:
+ssh -p 2222 ubuntu@192.168.1.100
+
+The ControlPath would expand to:
+~/.ssh/mux-ubuntu@192.168.1.100:2222
+
+This unique filename ensures that SSH sessions for different users, hosts, or ports don’t conflict.
+
+Task 8: Working with SSH multiplexing(earlier accelerated mode):
+----------------------------------
+ansible-playbook -i Inventory/inventory.ini Setup_tasks/setup-using-accmod.yml --ask-become-pass
+
+--run playbook with -vvvv (for verbose output)
+
+---output non verbose mode-----
 PLAY [Manage hosts behind a firewall using accelerated mode] ****************************************************************
 
 TASK [Gathering Facts] ******************************************************************************************************
@@ -198,11 +245,16 @@ web1                       : ok=9    changed=3    unreachable=0    failed=0    s
 web2                       : ok=9    changed=3    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
 
 ---output ends---
+Checking If Multiplexing is Working
+After an SSH session, check if a control socket is created:
+ls ~/.ssh/mux-*
+
+or manually entering a connection:
+ssh -o ControlMaster=yes -o ControlPath=~/.ssh/mux-test user@remote
 
 To check if SSH Multiplexing is working:
 ssh -o ControlPath=~/.ssh/mux-%r@%h:%p ans@m1
 ssh -o ControlPath=~/.ssh/mux-%r@%h:%p ans@m2
-
 
 If the connection is fast on repeated attempts, SSH multiplexing is working.
 If you see "Permission denied" or a slow connection, check ansible.cfg.

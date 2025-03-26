@@ -15,7 +15,7 @@
 
     - name: Handle error if NTP is missing
       ansible.builtin.fail:
-        msg: "NTP service is not installed. Proceeding to install..."
+        msg: "NTP service is installed. Proceeding to install..."
       when: ntp_status.rc != 0
 
     - name: Install NTP (if missing)

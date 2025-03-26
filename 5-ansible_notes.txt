@@ -1,6 +1,7 @@
 AWX Project Testing in Ansible
 ----------------------------
-AWX is an open-source project that provides a web-based user interface, REST API, and task engine for Ansible. 
+AWX is an open-source project that provides a web-based user interface, REST API, and 
+task engine for Ansible. 
 It serves as the upstream project for Red Hat Ansible Automation Platform (AAP). 
 In the context of project testing in AWX, this typically refers to verifying Ansible playbooks, 
 roles, and collections within an AWX project.
@@ -59,9 +60,7 @@ sudo apt update && sudo apt install -y \
 sudo systemctl start docker
 sudo systemctl enable docker
 
-sudo git clone https://github.com/ansible/awx.git
-
-#Install the AWX Operator
+    #Install the AWX Operator
     git clone https://github.com/ansible/awx-operator.git
     cd awx-operator
 
@@ -80,7 +79,7 @@ sudo git clone https://github.com/ansible/awx.git
     docker ps
 
 #Access web UI 
-http://localhost:8052
+http://localhost:80   2
 
 user: admin
 for password:

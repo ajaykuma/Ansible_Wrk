@@ -1,0 +1,7 @@
+- name: Gather System Information
+  hosts: all
+  gather_facts: yes
+  tasks:
+    - name: Display System Facts
+      debug:
+        var: ansible_facts

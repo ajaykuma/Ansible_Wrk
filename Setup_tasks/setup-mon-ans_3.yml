@@ -1,0 +1,22 @@
+- name: Push CPU Usage to Prometheus Pushgateway
+  hosts: all
+  become: yes
+  tasks:
+    - name: Get CPU Load (1-minute average)
+      shell: "uptime | awk -F 'load average: ' '{print $2}' | awk -F ', ' '{print $1}'"
+      register: cpu_load
+
+    - name: Ensure CPU load uses dot as decimal separator
+      set_fact:
+        cpu_load_formatted: "{{ cpu_load.stdout | replace(',', '.') }}"
+
+    - name: Send CPU Load to Prometheus Pushgateway
+      ansible.builtin.uri:
+        url: "http://pushgateway-ip:9091/metrics/job/ansible"
+        method: POST
+        body: |
+          cpu_load{host="{{ inventory_hostname }}"} {{ cpu_load_formatted }}
+        body_format: raw
+        headers:
+          Content-Type: "text/plain"
+

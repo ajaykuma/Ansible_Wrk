@@ -1,0 +1,13 @@
+- name: Alert for High Disk Usage
+  hosts: all
+  gather_facts: no
+  tasks:
+    - name: Get disk usage percentage
+      shell: df -h / | awk 'NR==2 {print $5}' | tr -d '%'
+      register: disk_usage
+      changed_when: false
+
+    - name: Alert if disk usage is above 80%
+      ansible.builtin.fail:
+        msg: "Disk usage is critical! Usage: {{ disk_usage.stdout }}%"
+      when: disk_usage.stdout | int > 80

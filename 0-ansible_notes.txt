@@ -77,6 +77,53 @@ ansible all -m ping -i /etc/ansible/hosts
 #ctrl + k + c
 #ctrl + k + u
 ----------------------------------------------------------
+About ansible.cfg for configuration settings: (will be needed specially when working
+with features such as accelerated mode, ssh multiplexing)
+
+Ansible looks for ansible.cfg in the following order (first found file is used):
+
+  --Current working directory (where you run ansible-playbook)
+    Best for project-specific settings.
+    Example: ~/my_project/ansible.cfg
+
+  --User's home directory (~/.ansible.cfg)
+    Affects only the current user.
+
+  --Global configuration (/etc/ansible/ansible.cfg)
+    Affects all users and playbooks on the system.
+
+    Requires sudo privileges to modify.
+
+Recommendation: Place ansible.cfg in the project directory for easy management.
+
+for example: vi /home/ans/Downloads/Ansible_Wrk/ansible.cfg
+            
+[defaults]
+inventory = inventory.ini
+host_key_checking = False
+retry_files_enabled = False
+timeout = 30
+
+[ssh_connection]
+pipelining = True
+control_path = ~/.ssh/mux-%r@%h:%p
+
+--checking current default settings:
+ansible-config dump
+
+--to create a config based on default settings:
+  depending on version:
+ansible-config dump > <path>/ansible.cfg
+
+or
+
+ansible-config init --disabled > <path>ansible.cfg
+ansible-config init --minimal > ansible.cfg
+
+--disabled → Includes all options, but they are commented out (disabled by default).
+--minimal → Only includes non-default settings in the file.
+
+--------------------------------------------------------
 Task 1: Login as 'ans' user and being in home directory
 
 --setup ssh access to your host 

@@ -1,0 +1,5 @@
+---
+apache_package: apache2
+python_package: python3.8
+nginx_package: nginx
+docker_package: docker.io

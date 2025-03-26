@@ -1,0 +1,105 @@
+Parameters refer to the options or variables that can be passed to Ansible modules, 
+roles, or playbooks to control their behavior. 
+
+--create a yaml for checking, installing and ensuring start of docker
+---
+- name: Working with docker
+  hosts: myhost
+  become: yes
+  vars:
+    package_name: docker  # Default value (can be overridden)
+  tasks:
+    - name: Install package
+      ansible.builtin.apt:
+        name: "{{ package_name }}"
+        state: present
+
+--Add target_hosts group to Inventory/inventory.ini
+[target-nodes]
+firewall ansible_host=m2 ansible_user=ans ansible_ssh_private_key_file=home/ans/.ssh/id_rsa
+
+--We also have Inventory/hosts.ini
+[myhost]
+192.168.1.200 ansible_ssh_private_key_file=/home/ans/.ssh/id_rsa
+#192.168.1.247 ansible_ssh_private_key_file=/home/ans/.ssh/id_rsa
+
+Run: ansible-playbook -i Inventory/hosts.ini Setup_tasks/setup-dock-on-remote.yml --ask-become-pass
+
+from command line: sudo systemctl status docker
+                   sudo systemctl stop docker
+
+Modify yaml to have package_name: dock
+Run: ansible-playbook -i Inventory/hosts.ini Setup_tasks/setup-dock-on-remote.yml --ask-become-pass
+Should fail: FAILED! => {"changed": false, "msg": "No package matching 'dock' is available"}
+
+To make the package name flexible without modifying the playbook, 
+we can use variables and pass them dynamically:
+
+Now running it with 
+Extra Variables : (--extra-vars or -e)
+Parameters can be passed at runtime too using -e:
+
+ansible-playbook -i Inventory/hosts.ini Setup_tasks/setup-dock-on-remote.yml --ask-become-pass 
+--extra-vars "package_name=docker"
+
+--ansible-playbook -i Inventory/hosts.ini Setup_tasks/setup-dock-on-remote.yml --ask-become-pass 
+--extra-vars "package_name=nginx"
+
+verify using commands:
+apt list --installed | grep nginx
+apt list --installed | grep docker
+
+ansible-playbook -i Inventory/hosts.ini Setup_tasks/setup-dock-on-remote.yml 
+-e "package_name=docker.io"
+ansible-playbook -i Inventory/hosts.ini Setup_tasks/setup-dock-on-remote.yml 
+ -e "package_name=['docker.io', 'docker-compose']"
+
+Modify yaml to check for package and status of service:
+- name: Install and start the service
+  hosts: myhost
+  become: yes
+  vars:
+    package_name:
+      - docker.io
+      - docker-compose
+    service_name: docker  # Adjust if different
+
+  tasks:
+    - name: Install required packages
+      ansible.builtin.apt:
+        name: "{{ package_name }}"
+        state: present
+        update_cache: yes
+
+    - name: Ensure the service is running
+      ansible.builtin.service:
+        name: "{{ service_name }}"
+        state: started
+        enabled: yes  # Ensures service starts on boot
+
+ansible-playbook -i Inventory/hosts.ini Setup_tasks/setup-dock-on-remote.yml --ask-become-pass
+
+Using Variables in files and interactive selection:
+create a directory host_vars and create an empty file : target_nodes.yml
+
+--Creates host_vars/ directory to store per-host variables.
+--Prompts the user to enter package names (comma-separated, e.g., docker.io, docker-compose).
+--Converts user input into a list and maps package names to possible service names.
+--Saves the package and service list into host_vars/target_nodes.yml.
+--Installs the packages on target_nodes.
+--Checks the status of each service related to the installed packages.
+--Starts the service if it's not already running.
+
+refer : setup-dock-on-remote2.yml
+
+-------------------------------------------
+Working with roles in a project structure initialized by ansible-galaxy and using variables
+for packages and services.
+
+Refer: Setup_tasks/setup-roles-n-use-var.yml
+Refer <newrole>
+--------------------------------------------
+
+
+
+
