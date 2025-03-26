@@ -1,0 +1,48 @@
+- name: Demonstrate Lookup Plugins
+  hosts: localhost
+  gather_facts: no
+  tasks:
+
+    # 1. Using 'file' Lookup
+    - name: Read API key from a file
+      debug:
+        msg: "{{ lookup('file', '/home/ans/output.txt') }}"
+
+    # 2. Using 'env' Lookup
+    - name: Fetch an environment variable
+      debug:
+        msg: "{{ lookup('env', 'HOME') }}"
+
+    # 3. Using 'password' Lookup
+    - name: Generate a secure password
+      set_fact:
+        my_password: "{{ lookup('password', '/tmp/passwordfile length=15 chars=ascii_letters,digits') }}"
+    
+    - name: Print the generated password
+      debug:
+        msg: "Generated password is {{ my_password }}"
+
+    # 4. Using 'csvfile' Lookup
+    - name: Fetch username from a CSV file
+      debug:
+        msg: "{{ lookup('csvfile', '1 username file=users.csv delimiter=,') }}"
+
+    # 5. Using 'dict' Lookup
+    - name: Convert dictionary to list
+      vars:
+        user_data:
+          name: admin
+          role: superuser
+      debug:
+        msg: "{{ lookup('dict', user_data) }}"
+
+    # 6. Using 'pipe' Lookup
+    - name: Get current date using a shell command
+      debug:
+        msg: "{{ lookup('pipe', 'date') }}"
+
+    # 7. Using 'url' Lookup
+    - name: Fetch public IP from an API
+      debug:
+        msg: "{{ lookup('url', 'http://ifconfig.me') }}"
+

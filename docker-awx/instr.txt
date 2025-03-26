@@ -15,3 +15,60 @@ sudo docker images
 --build docker-compose.yml file with  content as in .yml file
 
 sudo docker-compose -f docker-compose.yml up
+--------------------------
+git clone https://github.com/ansible/awx.git
+
+cd awx
+
+git tag
+
+
+git checkout 17.1.0
+
+
+or (recommended)
+git clone --branch 17.1.0 --depth 1 https://github.com/ansible/awx.git
+
+Inside the installer directory, you will find a inventory file. This file contains the configuration for your AWX installation.
+You can modify the settings in the inventory file. Some key settings you might want to modify:
+
+AWX_ADMIN_USER: The username for the admin user.
+AWX_ADMIN_PASSWORD: The password for the admin user.
+Postgres Password: This is for the database that AWX uses.
+AWX_SECRET_KEY: A random secret key for the installation.
+
+You can open the inventory file and update these values like so:
+
+Example:
+# Example entries in the inventory file
+admin_user=admin
+admin_password=your_password_here
+postgres_data_dir=/tmp/pgdocker
+pg_password=your_pg_password_here
+secret_key=your_secret_key_here
+
+Start the Installation with Docker Compose:
+AWX provides a Docker Compose-based installation, which is defined in the docker-compose.yml file. To start the installation, run the following command from the installer directory:
+
+pg_username=awx
+pg_password=awxpa1$awx
+pg_database=awx
+pg_port=5432
+secret_key=awxpa1$awx
+
+http://localhost:80
+
+from installer folder: make sure inventory points to your house or use hosts.ini
+sudo ansible-playbook -i inventory install.yml
+
+if issues look into config inventory
+[all:vars]
+awx_task_hostname=awx
+awx_web_hostname=awxweb
+
+http://localhost:80
+
+
+Looking at logs: docker-compose logs
+
+------------------
